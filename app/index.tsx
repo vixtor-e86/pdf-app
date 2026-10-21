@@ -1285,7 +1285,7 @@ export default function HomeScreen() {
                                     fontSize: 11,
                                   }}
                                 >
-                                  Powered by Gemini 1.5 Flash
+                                  Powered by {textTask.result.modelUsed || "Gemini Flash"}
                                 </Text>
                               </View>
                             </View>

@@ -14,8 +14,21 @@ export type TextExtractionResult = {
   extractedText: string;
   formatMode: "markdown" | "plain" | "summary";
   outputFileName: string;
+  modelUsed?: string;
   isRealAi?: boolean;
 };
+
+/**
+ * Returns the configured Gemini model from EXPO_PUBLIC_GEMINI_MODEL in .env,
+ * defaulting to "gemini-1.5-flash".
+ */
+export function getGeminiModel(): string {
+  const envModel = process.env.EXPO_PUBLIC_GEMINI_MODEL?.trim();
+  if (envModel && envModel.length > 0) {
+    return envModel;
+  }
+  return "gemini-1.5-flash";
+}
 
 export function getMimeType(fileName: string): string {
   const ext = fileName.toLowerCase().split(".").pop();
@@ -74,8 +87,9 @@ export async function analyzeFile(
 
       const prompt = `Analyze this document/image. Return JSON array with 3 objects: { title, body, tone ("info"|"success"|"warn") } assessing readability, compression, and visual balance. Return ONLY valid JSON.`;
 
+      const model = getGeminiModel();
       const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -186,8 +200,9 @@ export async function extractTextWithGemini(
     throw new Error("The selected file is empty or inaccessible.");
   }
 
+  const model = getGeminiModel();
   const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -240,6 +255,7 @@ export async function extractTextWithGemini(
     charCount: cleanText.length,
     extractedText: cleanText,
     formatMode,
+    modelUsed: model,
     isRealAi: true,
   };
 }
