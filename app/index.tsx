@@ -43,6 +43,7 @@ import { PrimaryButton } from "../components/PrimaryButton";
 import { ProgressBar } from "../components/ProgressBar";
 import { RadioOptionCard } from "../components/RadioOptionCard";
 import { ResultCard } from "../components/ResultCard";
+import { PdfPageRenderer } from "../components/PdfPageRenderer";
 import { SegmentedControl } from "../components/SegmentedControl";
 import { SizeSlider } from "../components/SizeSlider";
 import { UploadArea } from "../components/UploadArea";
@@ -170,6 +171,9 @@ export default function HomeScreen() {
         paddingTop: Math.max(insets.top, 12),
       }}
     >
+      {/* Invisible PDF to Image Page Renderer */}
+      <PdfPageRenderer />
+
       {/* Top App Brand Header */}
       <AppHeader />
 

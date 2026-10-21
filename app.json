@@ -2,11 +2,33 @@
   "expo": {
     "name": "My PDF App",
     "slug": "my-pdf-app",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
     "scheme": "mypdfapp",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#05060A"
+    },
+    "android": {
+      "package": "com.mypdfapp.app",
+      "versionCode": 1,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#05060A"
+      },
+      "permissions": [
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.INTERNET"
+      ]
+    },
     "plugins": [
       "expo-router",
-      "expo-secure-store"
-    ],
-    "userInterfaceStyle": "automatic"
+      "expo-secure-store",
+      "expo-splash-screen"
+    ]
   }
 }

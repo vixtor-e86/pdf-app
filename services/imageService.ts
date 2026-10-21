@@ -4,6 +4,8 @@ import { PDFDocument, PDFName, PDFRawStream } from "pdf-lib";
 import { Platform } from "react-native";
 import { PickedFile } from "../types";
 import { createBmpBase64 } from "../utils/bmpEncoder";
+import { renderPdfToImageDataUrl } from "./pdfRenderService";
+import { readFileAsBase64 } from "./aiService";
 
 export type CompressResult = {
   name: string;
@@ -251,99 +253,77 @@ export async function convertFile(
 
   // 1. PDF TO IMAGE CONVERSION
   if (isSourcePdf && normalizedTarget !== "PDF") {
-    // True BMP format encoding
-    if (normalizedTarget === "BMP") {
-      const bmpBase64 = createBmpBase64(1240, 1754, 255, 255, 255);
-      const destUri = `${FileSystem.cacheDirectory || FileSystem.documentDirectory}${outputName}`;
-      await FileSystem.writeAsStringAsync(destUri, bmpBase64, {
-        encoding: FileSystem.EncodingType.Base64,
-      });
-      return {
-        name: outputName,
-        format: "BMP",
-        beforeBytes: before,
-        sizeBytes: Math.round((bmpBase64.length * 3) / 4),
-        uri: destUri,
-      };
-    }
+    // Read the PDF using our multi-tier reader (handles Android DocumentPicker scoped permissions)
+    const { base64: base64Data } = await readFileAsBase64(file);
+
+    // Fast-path: Check if PDF contains an embedded JPEG stream (instant extraction for scanned photos)
     try {
-      if (
-        file.uri &&
-        (file.uri.startsWith("file:") ||
-          file.uri.startsWith("content:") ||
-          file.uri.startsWith("http"))
-      ) {
-        const base64Data = await FileSystem.readAsStringAsync(file.uri, {
-          encoding: FileSystem.EncodingType.Base64,
-        });
+      const pdfDoc = await PDFDocument.load(base64Data, {
+        ignoreEncryption: true,
+        throwOnInvalidObject: false,
+      });
 
-        const pdfDoc = await PDFDocument.load(base64Data, {
-          ignoreEncryption: true,
-          throwOnInvalidObject: false,
-        });
-
-        // Search for embedded scanned/photo images in the PDF streams
-        const objects = (pdfDoc.context as any).enumerateIndirectObjects();
-        for (const [ref, obj] of objects) {
-          if (obj instanceof PDFRawStream) {
-            const dict = (obj as any).dict;
-            const subtype = dict?.get(PDFName.of("Subtype"));
-            if (subtype === PDFName.of("Image")) {
-              const filter = dict?.get(PDFName.of("Filter"));
-              // Check for DCTDecode (raw JPEG stream)
-              if (filter === PDFName.of("DCTDecode")) {
-                const imgBytes = obj.getContents();
-                // Convert bytes to base64
-                let binary = "";
-                for (let k = 0; k < imgBytes.length; k++) {
-                  binary += String.fromCharCode(imgBytes[k]);
-                }
-                const b64 = typeof btoa !== "undefined" ? btoa(binary) : "";
-                if (b64) {
-                  const targetExt = normalizedTarget.toLowerCase();
-                  const destUri = `${FileSystem.cacheDirectory || FileSystem.documentDirectory}${baseName}_page1.${targetExt}`;
-
-                  await FileSystem.writeAsStringAsync(destUri, b64, {
-                    encoding: FileSystem.EncodingType.Base64,
-                  });
-
-                  return {
-                    name: `${baseName}_page1.${targetExt}`,
-                    format: normalizedTarget,
-                    beforeBytes: before,
-                    sizeBytes: imgBytes.length,
-                    uri: destUri,
-                  };
-                }
+      const objects = (pdfDoc.context as any).enumerateIndirectObjects();
+      for (const [ref, obj] of objects) {
+        if (obj instanceof PDFRawStream) {
+          const dict = (obj as any).dict;
+          const subtype = dict?.get(PDFName.of("Subtype"));
+          if (subtype === PDFName.of("Image")) {
+            const filter = dict?.get(PDFName.of("Filter"));
+            if (filter === PDFName.of("DCTDecode")) {
+              const imgBytes = obj.getContents();
+              let binary = "";
+              for (let k = 0; k < imgBytes.length; k++) {
+                binary += String.fromCharCode(imgBytes[k]);
+              }
+              const b64 = typeof btoa !== "undefined" ? btoa(binary) : "";
+              if (
+                b64 &&
+                (normalizedTarget === "JPG" || normalizedTarget === "JPEG")
+              ) {
+                const destUri = `${FileSystem.cacheDirectory || FileSystem.documentDirectory}${outputName}`;
+                await FileSystem.writeAsStringAsync(destUri, b64, {
+                  encoding: FileSystem.EncodingType.Base64,
+                });
+                return {
+                  name: outputName,
+                  format: normalizedTarget,
+                  beforeBytes: before,
+                  sizeBytes: imgBytes.length,
+                  uri: destUri,
+                };
               }
             }
           }
         }
       }
     } catch (pdfExtractErr: any) {
-      console.warn("PDF image stream extraction notice:", pdfExtractErr?.message);
+      console.log(
+        "Direct PDF image stream extraction skipped:",
+        pdfExtractErr?.message
+      );
     }
 
-    // Render a high-resolution, genuine image document using ImageManipulator
+    // High-fidelity PDF rendering (renders vector text, shapes, stamps, school letters to crisp image)
     try {
-      let saveFormat = ImageManipulator.SaveFormat.JPEG;
-      if (normalizedTarget === "PNG") {
-        saveFormat = ImageManipulator.SaveFormat.PNG;
-      } else if (normalizedTarget === "WEBP" && Platform.OS !== "ios") {
-        saveFormat = ImageManipulator.SaveFormat.WEBP;
-      }
-
-      const generated = await ImageManipulator.manipulateAsync(
-        BLANK_PAGE_BASE64,
-        [{ resize: { width: 1240, height: 1754 } }], // Crisp A4 at 150 DPI
-        { compress: 0.92, format: saveFormat }
+      const dataUrl = await renderPdfToImageDataUrl(
+        base64Data,
+        normalizedTarget,
+        1
       );
 
-      let genSize = 145_000;
+      const pureBase64 = dataUrl.split(",")[1];
+      const destUri = `${FileSystem.cacheDirectory || FileSystem.documentDirectory}${outputName}`;
+
+      await FileSystem.writeAsStringAsync(destUri, pureBase64, {
+        encoding: FileSystem.EncodingType.Base64,
+      });
+
+      let finalSize = Math.round((pureBase64.length * 3) / 4);
       try {
-        const info = await FileSystem.getInfoAsync(generated.uri);
+        const info = await FileSystem.getInfoAsync(destUri);
         if (info.exists && typeof (info as any).size === "number") {
-          genSize = (info as any).size;
+          finalSize = (info as any).size;
         }
       } catch {}
 
@@ -351,11 +331,14 @@ export async function convertFile(
         name: outputName,
         format: normalizedTarget,
         beforeBytes: before,
-        sizeBytes: genSize,
-        uri: generated.uri,
+        sizeBytes: finalSize,
+        uri: destUri,
       };
-    } catch (genErr) {
-      console.warn("Canvas image render error:", genErr);
+    } catch (renderErr: any) {
+      console.warn("PDF rasterization failed:", renderErr?.message);
+      throw new Error(
+        `Could not convert PDF to ${normalizedTarget}: ${renderErr?.message || "Render failed"}`
+      );
     }
   }
 
