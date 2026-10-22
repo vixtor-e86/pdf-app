@@ -7,11 +7,6 @@
     "icon": "./assets/icon.png",
     "scheme": "mypdfapp",
     "userInterfaceStyle": "automatic",
-    "splash": {
-      "image": "./assets/splash-icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#05060A"
-    },
     "android": {
       "package": "com.mypdfapp.app",
       "versionCode": 1,
@@ -28,13 +23,15 @@
     "plugins": [
       "expo-router",
       "expo-secure-store",
-      "expo-splash-screen"
-    ],
-    "extra": {
-      "router": {},
-      "eas": {
-        "projectId": "dd51b956-9bcb-4206-ba57-b574876d420c"
-      }
-    }
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "resizeMode": "contain",
+          "backgroundColor": "#05060A"
+        }
+      ],
+      "expo-sharing"
+    ]
   }
 }
