@@ -29,7 +29,7 @@ export default function Settings() {
   return (
     <View className="flex-1" style={{ backgroundColor: theme.bg, paddingTop: insets.top }}>
       <ScreenHeader title="Settings" subtitle="Make the app yours" />
-      <ScrollView className="px-6" contentContainerStyle={{ gap: 16, paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
+      <ScrollView className="px-6" contentContainerStyle={{ gap: 16, paddingBottom: Math.max(insets.bottom + 24, 40) }} showsVerticalScrollIndicator={false}>
         {/* Appearance */}
         <View className="flex-row items-center p-5" style={{ backgroundColor: theme.card, borderRadius: radius.xl, gap: 14, ...softShadow }}>
           <View className="items-center justify-center" style={{ width: 44, height: 44, borderRadius: radius.md, backgroundColor: theme.primarySoft }}>

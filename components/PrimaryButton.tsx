@@ -52,11 +52,14 @@ export function PrimaryButton({
           <ActivityIndicator color={variant === "primary" ? "#FFFFFF" : theme.primary} />
         ) : (
           <Text
+            numberOfLines={1}
             style={{
               color: getTextColor(),
               fontFamily: font.family.bold,
               fontSize: font.size.base,
               letterSpacing: 0.2,
+              includeFontPadding: false,
+              paddingHorizontal: 6,
             }}
           >
             {label}

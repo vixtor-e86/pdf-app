@@ -38,7 +38,7 @@ export default function AiAnalyze() {
   return (
     <View className="flex-1" style={{ backgroundColor: theme.bg, paddingTop: insets.top }}>
       <ScreenHeader title="AI Analyze" subtitle="Friendly feedback on your files, powered by Gemini" />
-      <ScrollView className="px-6" contentContainerStyle={{ gap: 20, paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
+      <ScrollView className="px-6" contentContainerStyle={{ gap: 20, paddingBottom: Math.max(insets.bottom + 24, 40) }} showsVerticalScrollIndicator={false}>
         {/* Gentle nudge when no key is stored yet */}
         {!apiKey && (
           <PressScale onPress={() => router.push("/settings")} scaleTo={0.98}>

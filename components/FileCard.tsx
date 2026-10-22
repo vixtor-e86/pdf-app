@@ -72,12 +72,13 @@ export function FileCard({
             <FileText size={20} color={theme.primary} />
           )}
           <Text
+            numberOfLines={1}
             style={{
               color: theme.primary,
               fontFamily: font.family.bold,
-              fontSize: 8.5,
+              fontSize: 9,
               marginTop: 2,
-              letterSpacing: 0.5,
+              includeFontPadding: false,
             }}
           >
             {file.isImage ? "IMG" : "PDF"}

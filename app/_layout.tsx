@@ -8,15 +8,14 @@ import {
 } from "@expo-google-fonts/inter";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import React, { useState } from "react";
+import React, { useEffect } from "react";
 import { LogBox, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import * as SplashScreen from "expo-splash-screen";
 import { ThemeProvider, useTheme } from "../theme/ThemeContext";
-import { MotionSplashScreen } from "../components/MotionSplashScreen";
 
-// Prevent native splash screen from auto-hiding prematurely
+// Keep the app icon splash screen visible while fonts load
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
 // Suppress known development warnings from interrupting the UI
@@ -42,19 +41,22 @@ export default function RootLayout() {
     Inter_600SemiBold,
     Inter_700Bold,
   });
-  const [showMotionSplash, setShowMotionSplash] = useState(true);
+
+  useEffect(() => {
+    if (fontsLoaded) {
+      SplashScreen.hideAsync().catch(() => {});
+    }
+  }, [fontsLoaded]);
+
+  if (!fontsLoaded) {
+    return null;
+  }
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <ThemeProvider>
           <Shell />
-          {showMotionSplash && (
-            <MotionSplashScreen
-              isAppReady={Boolean(fontsLoaded)}
-              onAnimationComplete={() => setShowMotionSplash(false)}
-            />
-          )}
         </ThemeProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>

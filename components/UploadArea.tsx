@@ -1,30 +1,28 @@
-import { FileText, Plus } from "lucide-react-native";
+import { Plus } from "lucide-react-native";
 import React from "react";
 import { Text, View } from "react-native";
 import { cardShadow, font, radius } from "../theme/tokens";
 import { useTheme } from "../theme/ThemeContext";
-import { PickedFile } from "../types";
-import { FileCard } from "./FileCard";
 import { PressScale } from "./PressScale";
 
-export function UploadArea({
-  file,
-  label = "Tap or click here to choose a file.",
-  hint = "File size limit: 50MB · PDF, JPG, PNG",
-  onPick,
-  onRemove,
-}: {
-  file: PickedFile | null;
-  label?: string;
-  hint?: string;
+interface UploadAreaProps {
   onPick: () => void;
   onRemove?: () => void;
-}) {
-  const { theme } = useTheme();
+  file?: any;
+  files?: any[];
+  label?: string;
+  hint?: string;
+}
 
-  if (file) {
-    return <FileCard file={file} onRemove={onRemove ?? onPick} />;
-  }
+export function UploadArea({
+  onPick,
+  onRemove,
+  file,
+  files,
+  label = "Tap or click here to choose a file.",
+  hint = "File size limit: 50MB • PDF, JPG, PNG",
+}: UploadAreaProps) {
+  const { theme } = useTheme();
 
   return (
     <PressScale onPress={onPick} scaleTo={0.99}>
@@ -44,8 +42,8 @@ export function UploadArea({
         <View
           className="items-center justify-center"
           style={{
-            width: 74,
-            height: 74,
+            width: 76,
+            height: 76,
             borderRadius: radius.lg,
             backgroundColor: "#FFFFFF",
             borderWidth: 1,
@@ -55,22 +53,25 @@ export function UploadArea({
         >
           <View
             style={{
-              width: 34,
-              height: 42,
+              minWidth: 44,
+              height: 48,
               borderWidth: 2,
               borderColor: theme.primary,
-              borderRadius: 6,
+              borderRadius: 8,
               alignItems: "center",
               justifyContent: "center",
-              paddingTop: 4,
+              paddingHorizontal: 6,
+              backgroundColor: "rgba(239, 68, 68, 0.04)",
             }}
           >
             <Text
+              numberOfLines={1}
               style={{
                 color: theme.primary,
                 fontFamily: font.family.bold,
-                fontSize: 10,
-                letterSpacing: 0.5,
+                fontSize: 12,
+                includeFontPadding: false,
+                textAlign: "center",
               }}
             >
               PDF
@@ -106,20 +107,26 @@ export function UploadArea({
 
         {/* Coral "+ Choose" pill button */}
         <View
-          className="flex-row items-center px-5 py-2.5 mt-1"
+          className="flex-row items-center justify-center mt-1"
           style={{
             backgroundColor: theme.primary,
             borderRadius: radius.pill,
+            paddingHorizontal: 22,
+            paddingVertical: 10,
+            minWidth: 116,
             gap: 6,
             ...cardShadow,
           }}
         >
           <Plus size={16} color="#FFFFFF" strokeWidth={3} />
           <Text
+            numberOfLines={1}
             style={{
               color: "#FFFFFF",
               fontFamily: font.family.semibold,
               fontSize: font.size.sm,
+              includeFontPadding: false,
+              paddingRight: 4,
             }}
           >
             Choose

@@ -6,6 +6,7 @@ import {
 } from "lucide-react-native";
 import React from "react";
 import { Pressable, Text, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { font, softShadow } from "../theme/tokens";
 import { useTheme } from "../theme/ThemeContext";
 
@@ -19,6 +20,7 @@ export function BottomTabBar({
   onTabChange: (tab: TabKey) => void;
 }) {
   const { theme } = useTheme();
+  const insets = useSafeAreaInsets();
 
   const tabs: { key: TabKey; label: string; icon: any }[] = [
     { key: "compress", label: "Compress", icon: FileArchive },
@@ -29,11 +31,12 @@ export function BottomTabBar({
 
   return (
     <View
-      className="flex-row items-center justify-around px-4 pt-2 pb-4"
+      className="flex-row items-center justify-around px-4 pt-2.5"
       style={{
         backgroundColor: theme.card,
         borderTopWidth: 1,
         borderTopColor: theme.border,
+        paddingBottom: Math.max(insets.bottom, 12),
         ...softShadow,
       }}
     >
@@ -48,7 +51,7 @@ export function BottomTabBar({
             className="items-center justify-center py-1"
             style={{ width: 72, gap: 4 }}
           >
-            {/* Classic Icon (No black box - smooth larger outline when active) */}
+            {/* Classic Icon */}
             <View
               className="items-center justify-center"
               style={{
@@ -65,10 +68,12 @@ export function BottomTabBar({
 
             {/* Tab Label */}
             <Text
+              numberOfLines={1}
               style={{
                 color: active ? theme.primary : theme.textMuted,
                 fontFamily: active ? font.family.bold : font.family.medium,
                 fontSize: 11,
+                includeFontPadding: false,
               }}
             >
               {t.label}

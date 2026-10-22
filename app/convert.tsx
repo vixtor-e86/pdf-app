@@ -42,7 +42,7 @@ export default function Convert() {
   return (
     <View className="flex-1" style={{ backgroundColor: theme.bg, paddingTop: insets.top }}>
       <ScreenHeader title="Convert Image" subtitle="Switch formats without leaving your phone" />
-      <ScrollView className="px-6" contentContainerStyle={{ gap: 20, paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
+      <ScrollView className="px-6" contentContainerStyle={{ gap: 20, paddingBottom: Math.max(insets.bottom + 24, 40) }} showsVerticalScrollIndicator={false}>
         <UploadArea file={file} label="Choose an image" hint="Any common image format" onPick={pick} />
 
         {/* Format selector */}

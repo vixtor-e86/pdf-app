@@ -55,7 +55,7 @@ export default function PdfTools() {
   return (
     <View className="flex-1" style={{ backgroundColor: theme.bg, paddingTop: insets.top }}>
       <ScreenHeader title="PDF Tools" subtitle="Everyday PDF jobs, done on-device" />
-      <ScrollView className="px-6" contentContainerStyle={{ gap: 16, paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
+      <ScrollView className="px-6" contentContainerStyle={{ gap: 16, paddingBottom: Math.max(insets.bottom + 24, 40) }} showsVerticalScrollIndicator={false}>
         <PdfToolRow
           icon={<Images size={24} color={theme.primary} />}
           title="Images to PDF"

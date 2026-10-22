@@ -46,7 +46,7 @@ export default function Compress() {
   return (
     <View className="flex-1" style={{ backgroundColor: theme.bg, paddingTop: insets.top }}>
       <ScreenHeader title="Compress Image" subtitle="Make images lighter, keep them looking great" />
-      <ScrollView className="px-6" contentContainerStyle={{ gap: 20, paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
+      <ScrollView className="px-6" contentContainerStyle={{ gap: 20, paddingBottom: Math.max(insets.bottom + 24, 40) }} showsVerticalScrollIndicator={false}>
         <UploadArea file={file} label="Choose an image" hint="JPG or PNG from your library" onPick={pick} />
 
         {/* Quality presets */}

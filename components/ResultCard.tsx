@@ -191,11 +191,13 @@ export function ResultCard({
                 >
                   <FileText size={26} color={theme.primary} />
                   <Text
+                    numberOfLines={1}
                     style={{
                       color: theme.primary,
                       fontFamily: font.family.bold,
                       fontSize: 9,
                       marginTop: 2,
+                      includeFontPadding: false,
                     }}
                   >
                     PDF
