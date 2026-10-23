@@ -4,7 +4,10 @@ import { PDFDocument, PDFName, PDFRawStream } from "pdf-lib";
 import { Platform } from "react-native";
 import { PickedFile } from "../types";
 import { createBmpBase64 } from "../utils/bmpEncoder";
-import { renderPdfToImageDataUrl } from "./pdfRenderService";
+import {
+  renderImageToBmpDataUrl,
+  renderPdfToImageDataUrl,
+} from "./pdfRenderService";
 import { readFileAsBase64 } from "./aiService";
 
 export type CompressResult = {
@@ -404,19 +407,42 @@ export async function convertFile(
 
     if (isReachable) {
       if (normalizedTarget === "BMP") {
-        const bmpBase64 = createBmpBase64(1080, 1440, 248, 248, 250);
-        const destUri = `${FileSystem.cacheDirectory || FileSystem.documentDirectory}${outputName}`;
-        await FileSystem.writeAsStringAsync(destUri, bmpBase64, {
-          encoding: FileSystem.EncodingType.Base64,
-        });
-        const bmpBytes = Math.round((bmpBase64.length * 3) / 4);
-        return {
-          name: outputName,
-          format: "BMP",
-          beforeBytes: before,
-          sizeBytes: bmpBytes,
-          uri: destUri,
-        };
+        try {
+          let base64Src = "";
+          try {
+            const manipulated = await ImageManipulator.manipulateAsync(
+              file.uri,
+              [],
+              { format: ImageManipulator.SaveFormat.PNG, base64: true }
+            );
+            base64Src = manipulated.base64 || "";
+          } catch {
+            const res = await readFileAsBase64(file);
+            base64Src = res.base64 || "";
+          }
+
+          if (base64Src) {
+            const bmpDataUrl = await renderImageToBmpDataUrl(base64Src);
+            const rawBmpB64 = bmpDataUrl.replace(
+              /^data:image\/[a-zA-Z0-9+.-]+;base64,/,
+              ""
+            );
+            const destUri = `${FileSystem.cacheDirectory || FileSystem.documentDirectory}${outputName}`;
+            await FileSystem.writeAsStringAsync(destUri, rawBmpB64, {
+              encoding: FileSystem.EncodingType.Base64,
+            });
+            const bmpBytes = Math.round((rawBmpB64.length * 3) / 4);
+            return {
+              name: outputName,
+              format: "BMP",
+              beforeBytes: before,
+              sizeBytes: bmpBytes,
+              uri: destUri,
+            };
+          }
+        } catch (bmpErr) {
+          console.warn("Real image to BMP conversion fallback:", bmpErr);
+        }
       }
 
       let saveFormat = ImageManipulator.SaveFormat.JPEG;

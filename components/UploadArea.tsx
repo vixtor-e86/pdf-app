@@ -3,13 +3,15 @@ import React from "react";
 import { Text, View } from "react-native";
 import { cardShadow, font, radius } from "../theme/tokens";
 import { useTheme } from "../theme/ThemeContext";
+import { PickedFile } from "../types";
+import { FileCard } from "./FileCard";
 import { PressScale } from "./PressScale";
 
 interface UploadAreaProps {
   onPick: () => void;
   onRemove?: () => void;
-  file?: any;
-  files?: any[];
+  file?: PickedFile | null;
+  files?: PickedFile[];
   label?: string;
   hint?: string;
 }
@@ -24,6 +26,23 @@ export function UploadArea({
 }: UploadAreaProps) {
   const { theme } = useTheme();
 
+  // 1. If a single file is selected, show the FileCard with remove button
+  if (file) {
+    return <FileCard file={file} onRemove={onRemove ?? onPick} />;
+  }
+
+  // 2. If multiple files are selected, show list of FileCards
+  if (files && files.length > 0) {
+    return (
+      <View style={{ gap: 10 }}>
+        {files.map((f, idx) => (
+          <FileCard key={idx} file={f} onRemove={onRemove ?? onPick} />
+        ))}
+      </View>
+    );
+  }
+
+  // 3. Otherwise show the dashed upload area
   return (
     <PressScale onPress={onPick} scaleTo={0.99}>
       <View

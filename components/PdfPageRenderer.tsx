@@ -23,12 +23,12 @@ export function PdfPageRenderer() {
   return (
     <View
       style={{
-        width: 0,
-        height: 0,
+        width: 1,
+        height: 1,
         position: "absolute",
-        top: -2000,
-        left: -2000,
-        opacity: 0,
+        top: 0,
+        left: -100,
+        opacity: 0.01,
       }}
       pointerEvents="none"
     >

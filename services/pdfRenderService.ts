@@ -85,6 +85,57 @@ export const PDF_RENDERER_HTML = `
       return 'data:image/bmp;base64,' + btoa(binary);
     }
 
+    async function handleConvertImageRequest(base64Data, format) {
+      try {
+        var img = new Image();
+        img.onload = function() {
+          try {
+            var canvas = document.getElementById('the-canvas');
+            canvas.width = img.naturalWidth || img.width;
+            canvas.height = img.naturalHeight || img.height;
+            var ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(img, 0, 0);
+
+            var cleanFmt = (format || 'BMP').toUpperCase();
+            var dataUrl = '';
+            if (cleanFmt === 'BMP') {
+              dataUrl = bmpFromCanvas(canvas);
+            } else if (cleanFmt === 'PNG') {
+              dataUrl = canvas.toDataURL('image/png', 1.0);
+            } else if (cleanFmt === 'WEBP') {
+              dataUrl = canvas.toDataURL('image/webp', 0.94);
+            } else {
+              dataUrl = canvas.toDataURL('image/jpeg', 0.94);
+            }
+
+            sendToNative({
+              type: 'SUCCESS',
+              dataUrl: dataUrl,
+              width: canvas.width,
+              height: canvas.height
+            });
+          } catch (innerErr) {
+            sendToNative({ type: 'ERROR', message: innerErr.message || 'Canvas processing error' });
+          }
+        };
+        img.onerror = function() {
+          sendToNative({ type: 'ERROR', message: 'Failed to decode image data' });
+        };
+
+        if (base64Data.indexOf('data:') === 0) {
+          img.src = base64Data;
+        } else {
+          img.src = 'data:image/png;base64,' + base64Data;
+        }
+      } catch (err) {
+        sendToNative({
+          type: 'ERROR',
+          message: err.message || 'Failed to process image'
+        });
+      }
+    }
+
     async function handleRenderRequest(base64Data, pageNum, scale, format) {
       try {
         if (!window.pdfjsLib) {
@@ -152,6 +203,8 @@ export const PDF_RENDERER_HTML = `
         var data = typeof raw === 'string' ? JSON.parse(raw) : raw;
         if (data.action === 'RENDER') {
           handleRenderRequest(data.base64, data.page, data.scale, data.format);
+        } else if (data.action === 'CONVERT_IMAGE') {
+          handleConvertImageRequest(data.base64, data.format);
         }
       } catch (e) {
         sendToNative({ type: 'ERROR', message: 'Invalid render message' });
@@ -196,6 +249,45 @@ export function handlePdfRendererMessage(dataString: string) {
   } catch (err) {
     console.warn("handlePdfRendererMessage parse error:", err);
   }
+}
+
+/**
+ * Converts any image (PNG, JPG, WebP) to a genuine 24-bit BMP binary with real image pixels.
+ */
+export async function renderImageToBmpDataUrl(
+  base64Image: string
+): Promise<string> {
+  const sender = postMessageToWebView;
+  if (!sender) {
+    throw new Error(
+      "Renderer is not mounted. Please ensure the app is open."
+    );
+  }
+
+  return new Promise((resolve, reject) => {
+    const timeoutId = setTimeout(() => {
+      if (currentRequest) {
+        currentRequest.reject(
+          new Error("Image to BMP render timed out. Please try again.")
+        );
+        currentRequest = null;
+      }
+    }, 20000);
+
+    currentRequest = {
+      resolve,
+      reject,
+      timeoutId,
+    };
+
+    const payload = JSON.stringify({
+      action: "CONVERT_IMAGE",
+      base64: base64Image,
+      format: "BMP",
+    });
+
+    sender(payload);
+  });
 }
 
 /**
